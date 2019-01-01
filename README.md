@@ -35,86 +35,53 @@ Deploy secure OpenVPN easy-to-use connection to an existing AWS VPC in 2 minutes
 You need to have an AWS account, the deployment user needs full EC2 and IAM rights.
 
 
-## Deployment
+## Quic Start deploy
 
-Use the AWS QuicKstart URLs to deploy different AWS regions.
+Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They will open the AWS CloudFormnation stacks page, the you need just give a few options and start it.
 
 
 ### Europe
 
-*Ireland*
+*Ireland:* [AWS: eu-west-1](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: eu-west-1](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*London:* [AWS: eu-west-2](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-*London*
-
-[AWS: eu-west-2](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*Paris*
-
-[AWS: eu-west-3](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Paris:* [AWS: eu-west-3](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 
-*Frankfurt*
+*Frankfurt:* [AWS: eu-central-1](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: eu-central-1](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*Stockholm*
-
-[AWS: eu-north-1](https://console.aws.amazon.com/cloudformation/home?region=eu-north-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
+*Stockholm:* [AWS: eu-north-1](https://console.aws.amazon.com/cloudformation/home?region=eu-north-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ### United States
 
-*North Virginia*
+*North Virginia:* [AWS: us-east-1](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: us-east-1](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Ohio:* [AWS: us-east-2](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-*Ohio*
+*North California:* [AWS: us-west-1](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: us-east-2](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*North California*
-
-[AWS: us-west-1](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*Oregon*
-
-[AWS: us-west-2](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Oregon:* [AWS: us-west-2](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ###Canada
 
-*Canada Central*
-
-[AWS: ca-central-1](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Canada Central:* [AWS: ca-central-1](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ###South America
 
-*Sao Paulo*
-
-[AWS: sa-east-1](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Sao Paulo:* [AWS: sa-east-1](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ###Asia Pacific, Australia, Japan
 
-*Mumbai, India*
+*Mumbai, India:* [AWS: ap-south-1](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: ap-south-1](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Seoul, South Korea:* [AWS: ap-northeast-2](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-*Seoul, South Korea*
+*Singapore:* [AWS: ap-southeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-[AWS: ap-northeast-2](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Sydney, Australia:* [AWS: ap-southeast-2](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
-*Singapore*
-
-[AWS: ap-southeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*Sydney, Australia*
-
-[AWS: ap-southeast-2](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
-
-*Tokyo, Japan*
-
-[AWS: ap-northeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
+*Tokyo, Japan:* [AWS: ap-northeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ## AWS CloudFormation paramaters
 

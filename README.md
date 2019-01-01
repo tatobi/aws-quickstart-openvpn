@@ -5,7 +5,7 @@ Deploy secure OpenVPN easy-to-use connection to an existing AWS VPC in 2 minutes
 
 ## Features
 
-- very easy to deploy via AWS Quickstart URLs and AWS CloudFormation,
+- very easy to deploy via AWS Quickstart URLs and AWS CloudFormation (__see below__),
 
 - __one-click download openvpn config__ via an S3 signed URL (no need to SSH to host) from CloudFormation Output tab,
 
@@ -82,6 +82,48 @@ Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They
 *Tokyo, Japan:* [AWS: ap-northeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
 ## AWS CloudFormation paramaters
+
+__Stack Name:__ choose a sdtack name (QS default: OpenVPN-Bastion),
+
+__VPC ID:__ choose an existing VPC where the OpenVPN instance going to be deployed,
+
+__VPC Public Subnet:__ choose a __*public*__ subnet within the VPC above (public is important, otherwise the bastion won't be accessible),
+
+__Limit external access to CIDR:__ optional, you can limite which IPs can connect to the bastion, 0.0.0.0/0 accessible from everywhere,
+
+__AWS EC2 Instance Type:__ choose an instance type from t2 and t3 Ec2 calsses (t2.micro is default because it is eligible for __FREE TIER__),
+
+__The number of generated OpenVPN connection profiles:__ how many openvpn config will be generated, multiple one means many hosts can use simultaneously the VPN conection,
+
+__Traffic routing:__ choose you ALL traffic, including the VPC and public Internet, (default gateway mode) __*ALL_GATEWAY_TCP443*__ routed through the tunnel, OR only the AWS VPC internal traffic: __*VPC_ONLY_UDP443*__. __IMPORTANT:__ in ALL_GATEWAY_TCP443 everything is going throug the VPN, it can be slower for remote desktop connections, but suitable for secure VPN tunnel from public places like a Hotel, hotspot, airport, etc...
+
+### Setup steps
+
+1. Choose a link above, click "Next",
+
+2. Fill CloudFormation parameters, then Click "Next",
+
+3. Click "Next",
+
+4. Check checkbox: "I acknowledge that AWS CloudFormation might create IAM resources."
+
+5. Click "Create"
+
+
+Then wait the stack to be __GREEN__ status: __CREATE_SUCCESSFUL__.
+
+## Connect
+
+Download the OpenVPN config profile ZIP file from the URL you can find below the CloudFormation stack's __Outputs__ tab.
+
+
+
+
+
+
+
+
+
 
 
 

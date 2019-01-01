@@ -57,7 +57,7 @@ Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They
 
 - fully tested on: __Windows 10, Linux (Ubuntu), Android, Mac OSX (tunnlebrick)__,
 
-- __secure:__ SHA512 channel auth, AES-256-CBC encryption, TLS 1.2 forced (openvpn > v2.3.10  or higher client versions needed!), __NO SSH__, access instance via AWS SSM only, internal DNS,
+- __secure:__ SHA512 channel auth, AES-256-CBC encryption, TLS 1.2 forced (openvpn > v2.3.10  or higher client versions needed!), __NO SSH__, access instance via AWS SSM,
 
 - __traffic routing options:__ __gateway/TCP443 (HTTPS)__ or VPC only/UDP443 - mostly unblocked from everywhere,
 
@@ -157,6 +157,15 @@ Open app, import profile, import the *.ovpn file.
 ## Tear down
 
 Simple delete the AWS CloudFormation stack. It will delete the S3 config folder with the openvpn configuration files as well.
+
+
+## AWS SSM Session Manager
+
+If you need to connect to the OpenVPN EC2 instance console, use the AWS SSM Session manager to have a remote console.
+
+[AWS SSM session manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-sys-console)
+
+Open a session and find the configuration at: /etc/openvpn
 
 
 ## Documentation

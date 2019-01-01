@@ -1,8 +1,8 @@
 # AWS Quick Start for OpenVPN 
 
-Deploy secure OpenVPN easy-to-use connection to an existing AWS VPC in 2 minutes, via a single click.
+Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes. Clients tested on Windows, Linux, Mac OSX and Android.
 
-## Deploy to regions
+## Single click deploy to AWS regions
 
 Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They will open the AWS CloudFormnation stacks page, the you need just give a few options and start it.
 

@@ -47,6 +47,10 @@ Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They
 
 *Tokyo, Japan:* [AWS: ap-northeast-1](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=OpenVPN-Bastion&templateURL=https://s3-eu-west-1.amazonaws.com/tatobi-aws-quickstart-openvpn/cloudformation/ovpn-aws-deploy-vpc.yaml)
 
+## Architecture
+
+[![N|Solid](https://raw.githubusercontent.com/tatobi/aws-quickstart-openvpn/master/docs/architecture.png)](https://raw.githubusercontent.com/tatobi/aws-quickstart-openvpn/master/docs/architecture.png)
+
 ## Features
 
 - very easy to deploy via AWS Quickstart URLs and AWS CloudFormation (__see below__),

@@ -159,13 +159,15 @@ Open app, import profile, import the *.ovpn file.
 Simple delete the AWS CloudFormation stack. It will delete the S3 config folder with the openvpn configuration files as well.
 
 
-## AWS SSM Session Manager
+## AWS SSM Session Manager / instance access
 
 If you need to connect to the OpenVPN EC2 instance console, use the AWS SSM Session manager to have a remote console.
 
 [AWS SSM session manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-sys-console)
 
-Open a session and find the configuration at: /etc/openvpn
+Open a session and find the configuration at: /etc/openvpn/
+
+Generated keys: /etc/openvpn/keys/
 
 
 ## Documentation

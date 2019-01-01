@@ -843,16 +843,17 @@ Resources:
           import json
           import boto3
           import cfnresponse
+          from botocore.client import Config
           
           region="${AWS::Region}"
-          s3 = boto3.client('s3', region_name=region)
-          URLExpires=86400
+          s3 = boto3.client('s3', region_name=region, config=Config(s3={'addressing_style': 'path'}))
+          URLExpires=43200
           
           s3bucket="${LambdaGenerateConfigS3Bucket.BucketName}"
           vpnconfigkey="openvpn-profiles.zip"
           
           def generatePresignedURLForVPNConfig():
-            return s3.generate_presigned_url('get_object', Params = {'Bucket': s3bucket, 'Key': vpnconfigkey}, ExpiresIn = URLExpires)
+            return s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': s3bucket, 'Key': vpnconfigkey}, ExpiresIn=URLExpires)
             
           def handler(event, context):
             if event['RequestType'] == 'Delete':
@@ -879,5 +880,5 @@ Resources:
 
 Outputs:
   DownloadOpenVPNProfilesURL:
-    Description: "You have 1 day (link expires) to download the VPN profile, otherwise use SSM to access machine and get them."
+    Description: "You have 12 hours (link expires) to download the VPN profile, otherwise use SSM to access machine and get them."
     Value: !Sub ${LambdaGenerateConfigPresignedURLs.OpenVPNProfiles}

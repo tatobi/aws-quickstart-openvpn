@@ -55,33 +55,31 @@ Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They
 
 - __embedded vpn config__ file: contains everything you need, muliple config file created at once (up to 100),
 
-- fully tested on: __Windows 10, Linux (Ubuntu), Android, Mac OSX (tunnlebrick)__,
+- tested on: __Windows 10, Linux (Ubuntu), Android, Mac OSX (tunnelblick)__,
 
 - __secure:__ SHA512 channel auth, AES-256-CBC encryption, TLS 1.2 forced (openvpn > v2.3.10  or higher client versions needed!), __NO SSH__, access instance via AWS SSM,
 
-- __traffic routing options:__ __gateway/TCP443 (HTTPS)__ or VPC only/UDP443 - mostly unblocked from everywhere,
+- __traffic routing options:__ __gateway/TCP443 (HTTPS)__ or VPC only/UDP443,
 
-- __anonymous:__ no VPN log files on servers, use AWS DNS server forced through the tunnel,
+- __anonymous:__ no VPN log files on servers, use local+AWS DNS server forced through the tunnel,
 
-- __fast caching DNS:__ cacheing dnsmasq installed and used on server side, pushed to VPN client,
+- __fast caching DNS:__ caching dnsmasq installed and used on server side, pushed to VPN client,
 
-- __cheap EC2 instances:__ t2 and t3 classes,
 
-- seamless teardown,
+- seamless teardown with AWS Lambda,
 
-- __ALL AWS regions supported__ by dynamic AMI selection,
+- __ALL AWS regions supported__ by dynamic AMI selection with AWS Lambda,
 
-- based on __Ubuntu 18.04LTS__ latest version by dynamic version selection.
+- based on __Ubuntu 18.04LTS__ latest version.
 
 
 ## Prerequisities
 
-You need to have an AWS account, the deployment user needs full EC2 and IAM rights.
+You need an AWS account and  full EC2 and IAM rights.
 
 
-## AWS CloudFormation setup
+## AWS CloudFormation parameters
 
-__Parameters:__
 
 __Stack Name:__ choose a sdtack name (QS default: OpenVPN-Bastion),
 
@@ -99,7 +97,7 @@ __Traffic routing:__ choose you ALL traffic, including the VPC and public Intern
 
 __IMPORTANT:__ in ALL_GATEWAY_TCP443 everything is going throug the VPN, it can be slower for remote desktop connections, but suitable for secure VPN tunnel from public places like a Hotel, hotspot, airport, etc...
 
-__Steps:__
+__Cloudformation Steps:__
 
 1. Choose a link above, click "Next",
 
@@ -116,15 +114,15 @@ Then wait the stack to be __GREEN__ status: __CREATE_COMPLETE__.
 
 ## Client connection
 
-Download the OpenVPN config profile ZIP file from the URL you can find below the CloudFormation stack's __Outputs__ tab.
+After the stack completd, download the OpenVPN config profile __ZIP file__ by the S3 URL you can find below the CloudFormation stack's __Outputs__ tab.
 
-__DownloadOpenVPNProfilesURL__: ...
+__DownloadOpenVPNProfilesURL__: [S3 signed URL](https://s3.signed.url/)
 
 Copy the URL to tyour browser and download the file.
 
 __IMPORTANT:__ by default the link is available for 12 hours after creation, for securiry reasons.
 
-__Windows 10:__ ZIP files does not work natively anymnore, Microsoft baffted handling them correctly (not the ZIp files invalid!), I recommend download and install the Open Source alternative: [7-ZIP](https://www.7-zip.org/) or __WinZIP__ to extract the config files.
+__NOTE on Windows 10:__ ZIP files does not work natively anymnore, Microsoft baffted handling them correctly (not the ZIp files invalid!), I recommend download and install the Open Source alternative: [7-ZIP](https://www.7-zip.org/) or __WinZIP__ to extract the config files.
 
 __UNZIP__ the downloaded ZIP file and save the *.ovpn files to a folder.
 
@@ -165,9 +163,9 @@ If you need to connect to the OpenVPN EC2 instance console, use the AWS SSM Sess
 
 [AWS SSM session manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-sys-console)
 
-Open a session and find the configuration at: /etc/openvpn/
+__OpenVPN base path:__ /etc/openvpn/
 
-Generated keys: /etc/openvpn/keys/
+__Generated keys:__ /etc/openvpn/keys/
 
 
 ## Documentation

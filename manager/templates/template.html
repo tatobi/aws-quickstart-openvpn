@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>OpenVPN Manager</title>
+    <!-- meta -->
+    <meta name="description" content="OpenVPN Managwer Flask/Jinja2 application">
+    <meta name="author" content="Tamas Tobi, tamas@tobi.hu">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- styles -->
+    <link href="{{app_route}}/css" rel="stylesheet">
+    {% block css %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      
+      <!-- navbar -->
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="/">
+            <img src="{{app_route}}/logo" width="32" height="28">
+          </a>
+        </div>
+
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">
+            <a class="navbar-item is-tab {{all_tab_active}}" href="{{app_route}}/">
+              List-All
+            </a>
+            <a class="navbar-item is-tab {{valid_tab_active}}" href="{{app_route}}/list-valid">
+              List-Valid
+            </a>
+            <a class="navbar-item is-tab {{revoke_tab_active}}" href="{{app_route}}/list-revoke">
+              List-Revoked
+            </a>
+            <a class="navbar-item is-tab" href="{{app_route}}/create">
+              <b>Create NEW</b>
+            </a>
+        </div>
+        
+      </nav>
+      <br />
+      <!-- content -->
+      <h1 class="title">{{title}} - {{site}}</h1>
+      
+      <!-- list -->
+      <table class="table is-bordered">
+        <thead>
+          <tr>
+            <th>Serial</th>
+            <th>Name (download link)</th>
+            <th>Validity</th>
+            <th>Expiration date</th>
+            <th>Revoke (date)</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>Serial</th>
+            <th>Name (download link)</th>
+            <th>Validity</th>
+            <th>Expiration date</th>
+            <th>Revoke (date)</th>
+          </tr>
+        </tfoot>
+        {% for n in my_list %}
+        {% if n[0] == 'R' %}
+        <tr bgcolor="orange">
+        {% elif n[0] == 'E' %}
+        <tr bgcolor="red">
+        {% else %}
+        <tr>
+        {% endif %}
+            <th>{{n[3]}}</th>
+            {% if n[0] == 'V' %}
+            <td><a href="{{app_route}}/download/{{n[3]}}" target="_blank"><b>{{n[5]}}</b></a></td>
+            {% else %}
+            <td>{{n[5]}}</td>
+            {% endif %}
+            <td>{{n[0]}}</td>
+            <td>{{n[1]}}</td>
+            {% if n[2] == '' %}
+            <td class="has-text-centered"><a class="button is-small is-info is-outlined" href="{{app_route}}/revoke/{{n[3]}}">Revoke</a></td>
+            {% else %}
+            <td>{{n[2]}}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>OpenVPN Manager</title>
+    <!-- meta -->
+    <meta name="description" content="OpenVPN Manager Flask/Jinja2 application">
+    <meta name="author" content="Tamas Tobi, tamas@tobi.hu">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- styles -->
+    <link href="{{app_route}}/css" rel="stylesheet">
+    {% block css %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      
+      <!-- navbar -->
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <a class="navbar-item is-tab" href="/">
+            <img src="{{app_route}}/logo" width="32" height="28">
+          </a>
+        </div>
+
+        <div id="navbarBasicExample" class="navbar-menu">
+          <div class="navbar-start">
+            <a class="navbar-item is-tab" href="{{app_route}}/">
+              List-All
+            </a>
+            <a class="navbar-item is-tab" href="{{app_route}}/list-valid">
+              List-Valid
+            </a>
+            <a class="navbar-item is-tab" href="{{app_route}}/list-revoke">
+              List-Revoked
+            </a>
+            <a class="navbar-item is-tab" href="{{app_route}}/create">
+              <b>Create NEW</b>
+            </a>
+        </div>
+        
+      </nav>
+      
+      <!-- content -->
+      <br />
+      <h1 class="title">{{title}} - {{site}}: <font color="red"><b>{{cert_name}}</b></font> permanently</h1>
+      <div class="field is-grouped">
+        <p class="control">
+          <form action="{{app_route}}/revoke_certificate/{{serial}}" method="post">
+            <input type="hidden" name="serial" id="serial" value="{{serial}}">
+            <br />
+            {% if done %}
+            <a class="button is-light" href="{{app_route}}/">BACK TO LIST</a>
+            {% else %}
+            <input class="button is-primary is-danger" type="submit" value="REVOKE">
+            <a class="button is-light" href="{{app_route}}/">CANCEL</a>
+            {% endif %}
+          </form>
+        </p>
+      </div>
+        {% if out %}
+        <article class="message is-info">
+          <div class="message-header">
+            <p>Info</p>
+            <button class="delete" aria-label="delete"></button>
+          </div>
+          <div class="message-body">
+            {{out}}
+          </div>
+        </article>
+        {% endif %}
+    </div>
+  </body>
+</html>

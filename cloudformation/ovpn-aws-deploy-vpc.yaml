@@ -1,0 +1,883 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 
+  Automated OpenVPN bastion Deployment to an existing AWS VPC
+  Copyright Tamas Tobi / GitHUB @tatobi, tamas@tobi.hu - 2019'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: AWS Network Configuration
+      Parameters:
+      - VPCID
+      - PublicSubnetID
+      - RemoteAccessCIDR
+    - Label:
+        default: Amazon EC2 Configuration
+      Parameters:
+      - EC2InstanceType
+    - Label:
+        default: OpenVPN Configuration
+      Parameters:
+      - VPNNumberOfPreGeneratedCerts
+      - VPNTrafficRoutingProtocol
+
+    ParameterLabels:
+      VPCID:
+        default: VPC ID
+      PublicSubnetID:
+        default: VPC Public Subnet
+      EC2InstanceType:
+        default: AWS EC2 Instance Type
+      RemoteAccessCIDR:
+        default: Limit external access to CIDR
+      VPNNumberOfPreGeneratedCerts:
+        default: The number of generated OpenVPN connection profiles
+      VPNTrafficRoutingProtocol:
+        default: Traffic routing
+
+Parameters:
+  RemoteAccessCIDR:
+    Description: CIDR block (IP address range) to allow VPN access to the 
+      host. Use 0.0.0.0/0 to allow access from all locations.
+    Type: String
+    Default: '0.0.0.0/0'
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: must be a valid IPv4 CIDR range of the form x.x.x.x/x.
+
+  EC2InstanceType:
+    Description: EC2 type for the OpenVPN Bastion instance.
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t3.nano
+    - t3.micro
+    - t3.small
+    - t2.nano
+    - t2.micro
+    - t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
+
+  PublicSubnetID:
+    Description: ID of the public subnet that you want to provision the OpenVPN instance (e.g., subnet-a0246dcd)
+    Type: 'AWS::EC2::Subnet::Id'
+
+  VPCID:
+    Description: 'ID of the VPC (e.g., vpc-0343606e)'
+    Type: 'AWS::EC2::VPC::Id'
+    
+  VPNNumberOfPreGeneratedCerts:
+    Description: 'Initial number of generated OpenVPN connection profiles'
+    Default: 3
+    Type: Number
+    MinValue: 1
+    MaxValue: 100
+    
+  VPNTrafficRoutingProtocol:
+    Description: "Choose: route ALL traffic (gateway mode) via TCP443 or VPC only (internal) via UDP443 from the connected host."
+    Type: String
+    Default: ALL_GATEWAY_TCP443
+    AllowedValues:
+    - ALL_GATEWAY_TCP443
+    - VPC_ONLY_UDP443
+
+Rules:
+  SubnetsInVPC:
+    Assertions:
+      - Assert:
+          'Fn::EachMemberIn':
+            - 'Fn::ValueOfAll':
+                - 'AWS::EC2::Subnet::Id'
+                - VpcId
+            - 'Fn::RefAll': 'AWS::EC2::VPC::Id'
+        AssertDescription: Selected subnet must exist in the VPC
+
+Resources:
+  BastionSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref RemoteAccessCIDR
+        - IpProtocol: udp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref RemoteAccessCIDR
+      VpcId: !Ref VPCID
+      GroupDescription: Bastion Instance Security Group
+      GroupName : !Sub "${AWS::StackName} BastionSecurityGroup"
+      
+  
+########################################################
+# OpenVPN AMI image configuration by Lambda
+# Dynamically determine local Ubuntu AMI for bastion 
+# With Lambda
+########################################################
+  LambdaGetAMIImagesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - ec2:DescribeImages
+            - ec2:Describe*
+            Resource: "*"
+
+  LambdaGetAmiImagesForBastion:
+    Type: "AWS::Lambda::Function"
+    DependsOn:
+      - LambdaGetAMIImagesRole
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          import json
+          import boto3
+          import cfnresponse
+          
+          AMI_VENDOR_STRING="ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server*"
+          #old 16.04:
+          #AMI_VENDOR_STRING="ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server*"
+
+          def GetLatestAMIID():
+            EC2 = boto3.client('ec2', region_name="${AWS::Region}")
+            response = EC2.describe_images(
+                Owners=['099720109477'],
+                Filters=[
+                  {'Name': 'name', 'Values': [AMI_VENDOR_STRING]},
+                  {'Name': 'architecture', 'Values': ['x86_64']},
+                  {'Name': 'root-device-type', 'Values': ['ebs']},
+                ],
+            )
+
+            amis = sorted(response['Images'],
+                          key=lambda x: x['CreationDate'],
+                          reverse=True)
+            print(amis[0]['ImageId'])
+            return format(amis[0]['ImageId'])
+          
+          def handler(event, context):
+            if event['RequestType'] == 'Delete':
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              return
+            try:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, { 'Id': GetLatestAMIID() })
+              return
+            except Exception as e:
+              print(e)
+              cfnresponse.send(event, context, cfnresponse.FAILED, { 'Error': format(e) })
+              return
+          
+      Handler: "index.handler"
+      Runtime: "python3.6"
+      Timeout: "300"
+      Role: !GetAtt LambdaGetAMIImagesRole.Arn
+
+  AMIInfo:
+    Type: Custom::AMIInfo
+    Properties:
+      ServiceToken: !GetAtt LambdaGetAmiImagesForBastion.Arn
+      Region: !Ref "AWS::Region"
+
+########################################################
+# Generate OpenVPN bastion config bucket
+########################################################
+  LambdaGenerateConfigS3BucketRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - s3:*
+            Resource: "*"
+
+  LambdaGenerateConfigS3BucketFunction:
+    Type: "AWS::Lambda::Function"
+    DependsOn:
+      - LambdaGenerateConfigS3BucketRole
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          import json
+          import boto3
+          import cfnresponse
+          import string
+          import random
+          import zlib
+          import time
+          
+          def generateRandomName(N=10):
+            return ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(N))
+            
+          def createS3Bucket():
+            
+            region="${AWS::Region}"
+            stackname="${AWS::StackName}"
+            s3 = boto3.resource('s3', region_name=region)
+            
+            #randompostfix=generateRandomName()
+            randompostfix=str(zlib.crc32(bytearray(("${AWS::StackName}"+str(time.time())),'ascii')))
+            s3bucketname="bastion-config-"+stackname.lower()+"-"+randompostfix
+            
+            if region == "us-east-1":
+              bucket = s3.create_bucket(
+                  Bucket=s3bucketname
+              )
+            else:
+              bucket = s3.create_bucket(
+                  Bucket=s3bucketname,
+                  CreateBucketConfiguration={
+                    'LocationConstraint': region
+                  }
+              )
+            return s3bucketname
+          
+          def handler(event, context):
+            if event['RequestType'] == 'Delete':
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              return
+            try:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, { 'BucketName': createS3Bucket() })
+              return
+            except Exception as e:
+              print(e)
+              cfnresponse.send(event, context, cfnresponse.FAILED, { 'Error': format(e) })
+              return
+          
+      Handler: "index.handler"
+      Runtime: "python3.6"
+      Timeout: "300"
+      Role: !GetAtt LambdaGenerateConfigS3BucketRole.Arn
+
+  LambdaGenerateConfigS3Bucket:
+    Type: Custom::LambdaGenerateConfigS3Bucket
+    Properties:
+      ServiceToken: !GetAtt LambdaGenerateConfigS3BucketFunction.Arn
+      Region: !Ref "AWS::Region"
+
+########################################################
+# Bastion Configuration
+# keep bastion here because
+# for testing Bastion acts as
+# the NAT
+########################################################
+
+#create role
+  BastionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+      Policies:
+      - PolicyName: S3FullAccess
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: 's3:*'
+              Resource: '*'
+
+  BastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref BastionRole
+
+#######################
+# bastion OpenVPN host
+#######################
+
+  BastionHost:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+    - BastionInstanceProfile
+    - LambdaGenerateConfigS3BucketFunction
+    - LambdaGetAmiImagesForBastion
+    Properties:
+      ImageId: !GetAtt AMIInfo.Id
+      InstanceType: !Ref EC2InstanceType
+      SourceDestCheck: false
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeleteOnTermination: true
+        DeviceIndex: 0
+        SubnetId: !Ref PublicSubnetID
+        GroupSet:
+        - Ref: BastionSecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "openvpn.bastion.${AWS::StackName}"
+      IamInstanceProfile: !Ref BastionInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          #update, install necessary software
+          apt update
+          apt -y install python3-setuptools python3-pip zip openvpn git curl jq ipcalc dnsmasq
+          pip3 install awscli boto3
+          
+          #install python2 keep for cfn tools
+          apt -y install python-pip python-setuptools
+          pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+          ln -s /root/aws-cfn-bootstrap-latest/init/ubuntu/cfn-hup /etc/init.d/cfn-hup
+          
+          #install AWS SSM agent
+          if [[ ! -n `ps axu | grep amazon-ssm-agent | grep -v grep` ]]; 
+          then
+            mkdir -p /tmp/ssm
+            cd /tmp/ssm
+            wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+            dpkg -i amazon-ssm-agent.deb
+            systemctl enable amazon-ssm-agent
+            systemctl start amazon-ssm-agent
+          fi
+          
+          #update snap packages
+          if [[ ! -n `ps axu | grep snapd | grep -v grep` ]]; 
+          then
+            snap refresh
+          fi
+          
+          #start cfn service
+          /usr/local/bin/cfn-init -v --stack ${AWS::StackId} --resource BastionHost --region ${AWS::Region}
+          /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource BastionHost --region ${AWS::Region}
+          
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default: 
+          - config-cfn-hup
+        config-cfn-hup:
+          files:
+            #cfn-hup configuration 
+            '/etc/cfn/cfn-hup.conf':
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                interval=1
+            '/etc/cfn/hooks.d/cfn-auto-reloader.conf':
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.BastionHost.Metadata.AWS::CloudFormation::Init
+                action=/usr/local/bin/cfn-init -v --stack ${AWS::StackId} --resource BastionHost --region ${AWS::Region}
+            #systemd service 
+            '/etc/systemd/system/cfn-hup.service': 
+              content: |
+                [Unit]
+                Description=Cloud formation helper daemon
+
+                [Service]
+                ExecStart=/usr/local/bin/cfn-hup
+                Restart=always
+                Type=simple
+
+                [Install]
+                WantedBy=multi-user.target
+            
+
+            '/opt/bastion-init-openvpn-git.sh':
+              mode: '000755'
+              owner: "root"
+              group: "root"
+              content: !Sub |
+                #!/bin/bash
+                
+                cd /opt
+                mkdir -p /opt/openvpn-keys
+                
+                git clone "https://github.com/tatobi/easy-openvpn.git"
+                
+
+            '/opt/bastion-init-openvpn.sh':
+              mode: '000755'
+              owner: "root"
+              group: "root"
+              content: !Sub |
+                #!/bin/bash
+                
+                echo "#################"
+                echo "INIT-OPENVPN START..."
+
+                echo "$@"
+
+                mkdir -p /opt/openvpn-keys/
+                mv /opt/easy-openvpn/keygen /etc/openvpn/
+                cd /etc/openvpn/keygen
+                chmod +x /etc/openvpn/keygen/*
+
+                export openvpnvars="/etc/openvpn/keygen/vars"
+
+                public_ip=`curl http://169.254.169.254/latest/meta-data/public-ipv4`
+                private_ip=`curl http://169.254.169.254/latest/meta-data/local-ipv4`
+                private_vpc_cidr=`aws ec2 describe-vpcs --vpc-ids ${VPCID} --region ${AWS::Region} | jq -r '.Vpcs[].CidrBlockAssociationSet[].CidrBlock'`
+                private_vpc_ipblock=`echo $private_vpc_cidr | cut -d '/' -f1`
+                awsdns=`echo $private_vpc_ipblock | tr "." " " | awk '{ print $1"."$2"."$3".2" }'`
+                cidr_subnet=`ipcalc $private_vpc_cidr | grep -i netmask | awk '{ print $2 }'`
+
+                echo "Public IP: $public_ip"
+                echo "AWS VPC CIDR: $private_vpc_cidr"
+                echo "AWS VPC CIDR SUBNET: $cidr_subnet"
+                echo "AWS VPC IP BLOCK: $private_vpc_ipblock"
+                echo "AWS DNS IP: $awsdns"
+
+                sed -i 's/CHANGE_SERVER_IP/'$public_ip'/g' $openvpnvars
+                sed -i 's/CHANGE_CC/'EU'/g' $openvpnvars
+                sed -i 's/CHANGE_PROVINCE/'AWS'/g' $openvpnvars
+                sed -i 's/CHANGE_CITY/'${AWS::Region}'/g' $openvpnvars
+                sed -i 's/CHANGE_ORG/'AWS'/g' $openvpnvars
+                sed -i 's/CHANGE_ORG_EMAIL/'anonymous'/g' $openvpnvars
+                sed -i 's/CHANGE_OU/'AWS_CloudFormation'/g' $openvpnvars
+
+                #configure dns push using aws dns service with local cacheing
+                echo "push \"route $private_vpc_ipblock $cidr_subnet\"" | tee --append server-template.conf
+                
+                echo "push \"dhcp-option DNS $private_ip\"" | tee --append server-template.conf
+                
+                echo "push \"route $private_vpc_ipblock $cidr_subnet\"" | tee --append server-template-tcp-commongw.conf
+                
+                echo "push \"dhcp-option DNS $private_ip\"" | tee --append server-template-tcp-commongw.conf
+
+                #configure dnsmasq
+                echo "nameserver $awsdns" | tee /etc/resolv.dnsmasq
+                
+                echo "listen-address=$private_ip" | tee /etc/dnsmasq.conf
+                echo "port=53" | tee --append /etc/dnsmasq.conf
+                echo "bind-interfaces" | tee --append /etc/dnsmasq.conf
+                echo "resolv-file=/etc/resolv.dnsmasq" | tee --append /etc/dnsmasq.conf
+                echo "cache-size=500" | tee --append /etc/dnsmasq.conf
+                echo "neg-ttl=60" | tee --append /etc/dnsmasq.conf
+                echo "bogus-priv" | tee --append /etc/dnsmasq.conf
+                
+                systemctl stop dnsmasq
+                systemctl enable dnsmasq
+                systemctl start dnsmasq
+
+                if [[ "${VPNTrafficRoutingProtocol}" == "ALL_GATEWAY_TCP443" ]];
+                then
+                  bash create-server-tcp-gw
+                else
+                  bash create-server
+                fi
+                systemctl enable openvpn@server
+                systemctl start openvpn@server
+                systemctl start openvpn
+
+                i=1
+                while [[ "$i" -le "${VPNNumberOfPreGeneratedCerts}" ]];
+                do
+                    if [[ "${VPNTrafficRoutingProtocol}" == "ALL_GATEWAY_TCP443" ]];
+                    then
+                      bash build-key-embed-tcp-commongw "openvpn.profile.${AWS::StackName}.$i";
+                    else
+                      bash build-key-embed "openvpn.profile.${AWS::StackName}.$i";
+                    fi
+                    cp /etc/openvpn/keys/openvpn.profile.${AWS::StackName}.$i/openvpn.profile.${AWS::StackName}.$i.ovpn /opt/openvpn-keys/; 
+                    i=$((i + 1))
+                done
+
+                cd /opt/openvpn-keys/
+                zip -9 -y -q openvpn-profiles.zip ./*
+
+                aws s3 cp openvpn-profiles.zip s3://${LambdaGenerateConfigS3Bucket.BucketName}/ --region ${AWS::Region}
+
+                chown ubuntu:ubuntu /opt/openvpn-keys/*
+
+                echo "INIT-OPENVPN DONE."
+                echo "#################"
+
+                exit 0
+
+            '/opt/purge-s3-config-bucket.py':
+              mode: '000755'
+              owner: "root"
+              group: "root"
+              content: !Sub |
+                #!/usr/bin/env python3
+
+                import boto3
+                import os
+                import sys
+                import time
+
+                bucket="${LambdaGenerateConfigS3Bucket.BucketName}"
+                region="${AWS::Region}"
+
+                print("DELETE BUCKET: "+bucket)
+                print(time.ctime())
+
+                session = boto3.Session(region_name=region)
+                s3 = session.resource(service_name='s3')
+                bucket = s3.Bucket(bucket)
+                bucket.object_versions.delete()
+                bucket.delete()
+
+                print(time.ctime())
+                print("DONE.")
+
+                sys.exit(0)
+
+            '/opt/delete-stack.sh':
+              mode: '000755'
+              owner: "root"
+              group: "root"
+              content: !Sub |
+                #!/bin/bash
+                
+                python3 /opt/purge-s3-config-bucket.py
+          
+          commands:
+            "00-enable-cfn-hup":
+              command: "systemctl enable cfn-hup.service"
+            "01-start-cfn-hup":
+              command: "systemctl start cfn-hup.service" 
+            "02-init-openvpn-git":
+              command: "/opt/bastion-init-openvpn-git.sh"
+            "03-init-openvpn":
+              command: "/opt/bastion-init-openvpn.sh"
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT30M
+
+
+  # This is a CloudWatch alarm https://aws.amazon.com/cloudwatch/
+  # If the Bastion node is unresponsive for 5 minutes, AWS will attempt to recover it
+  BastionRecoveryTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - BastionHost
+    Properties:
+      AlarmDescription: Trigger a recovery when instance status check fails for 15
+        consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      # 300-second periods (5 minute)
+      Period: '300'
+      # 5-minute check-ins
+      EvaluationPeriods: '3'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      # This is the call that actually tries to recover the instance
+      AlarmActions:
+        - !Sub "arn:aws:automate:${AWS::Region}:ec2:recover"
+      # Applies this alarm to our K8sMasterInstance
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref BastionHost
+        
+###############################################
+# Lambda function for graceful tear-down of KOPS by AWS SSM
+###############################################
+
+  # IAM role for Lambda function for generating kubeadm token
+  LambdaGracefulTearDownRole:
+    Type: "AWS::IAM::Role"
+    DependsOn:
+      - BastionHost
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: ["lambda.amazonaws.com"]
+          Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: "lambda_ssm_policy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: "Allow"
+            Action:
+              - 'ssm:DescribeAssociation'
+              - 'ssm:GetDeployablePatchSnapshotForInstance'
+              - 'ssm:GetCommandInvocation'
+              - 'ssm:GetDocument'
+              - 'ssm:GetManifest'
+              - 'ssm:GetParameters'
+              - 'ssm:ListAssociations'
+              - 'ssm:ListInstanceAssociations'
+              - 'ssm:PutInventory'
+              - 'ssm:PutComplianceItems'
+              - 'ssm:PutConfigurePackageResult'
+              - 'ssm:UpdateAssociationStatus'
+              - 'ssm:UpdateInstanceAssociationStatus'
+              - 'ssm:UpdateInstanceInformation'
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - 'ssm:SendCommand'
+            Resource: 
+              - !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${BastionHost}"
+              - !Sub "arn:aws:ssm:${AWS::Region}::document/AWS-RunShellScript"
+          - Effect: Allow
+            Action:
+              - 'ec2messages:AcknowledgeMessage'
+              - 'ec2messages:DeleteMessage'
+              - 'ec2messages:FailMessage'
+              - 'ec2messages:GetEndpoint'
+              - 'ec2messages:GetMessages'
+              - 'ec2messages:SendReply'
+            Resource: '*'
+          - Effect: Allow
+            Action: 's3:*'
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:AuthorizeSecurityGroupIngress'
+              - 'ec2:RevokeSecurityGroupIngress'
+              - 'ec2:AuthorizeSecurityGroupEgress'
+              - 'ec2:RevokeSecurityGroupEgress'
+              - 'ec2:DescribeTags'
+              - 'ec2:DescribeVpcs'
+              - 'ec2:DescribeAvailabilityZones'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeInternetGateways'
+              - 'ec2:DescribeEgressOnlyInternetGateways'
+              - 'ec2:DescribeNatGateways'
+              - 'ec2:DescribeRouteTables'
+              - 'ec2:DescribeAddresses'
+              - 'ec2:DescribeNetworkAcls'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:AttachNetworkInterface'
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DescribeNetworkInterfaceAttribute'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DetachNetworkInterface'
+              - 'ec2:ModifyNetworkInterfaceAttribute'
+              - 'ec2:ResetNetworkInterfaceAttribute'
+              - 'ec2:DeleteNetworkInterface'
+            Resource: '*'
+
+
+  # Lambda Function for graceful kops teardown
+  LambdaGracefulTearDown:
+    Type: "AWS::Lambda::Function"
+    DependsOn:
+      - BastionHost
+      - LambdaGracefulTearDownRole
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          import sys
+          import boto3
+          import cfnresponse
+          import time
+          
+          ssm_exit_statuses=['Success']
+          ssm = boto3.client('ssm', region_name="${AWS::Region}")
+          
+          def ssm_del_k8scluster():
+            instanceID="${BastionHost}"
+            
+            response = ssm.send_command(
+                InstanceIds=[
+                    instanceID
+                ],
+                DocumentName='AWS-RunShellScript',
+                Comment='Graceful tear down Stack in CFN template',
+                Parameters={
+                    'commands': [
+                        '/opt/delete-stack.sh'
+                    ]
+                }
+            )
+            return response
+          
+          def handler(event, context):
+            if event['RequestType'] == 'Delete':
+              r=ssm_del_k8scluster()
+              commandID=r.get('Command').get('CommandId')
+              print(commandID)
+              time.sleep(5)
+              for _ in range(80):
+                  try:
+                      response = ssm.get_command_invocation(
+                          CommandId=commandID,
+                          InstanceId=instanceID
+                      )
+                      ssm_status=response.get('Status')
+                      print("-----")
+                      print(ssm_status)
+                      print(time.ctime())
+                      if ssm_status in ssm_exit_statuses:
+                         print("SSM Command Finished.")
+                         break
+                      time.sleep(3)
+                  except Exception as e:
+                      print(e)
+                      time.sleep(3)
+                      pass
+              time.sleep(30)
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              return {"Delete":"OK"}
+            if event['RequestType'] == 'Create':
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              return {"Create":"OK"}
+              
+      Handler: "index.handler"
+      Runtime: "python3.6"
+      Timeout: "300"
+      Role: !GetAtt LambdaGracefulTearDownRole.Arn
+
+  # A Custom CFN resource that uses the lambda function to invoke SSM
+  LambdaCustomResource:
+    Type: "Custom::CustomResourceType"
+    DependsOn:
+      - BastionHost
+      - LambdaGracefulTearDownRole
+      - LambdaGracefulTearDown
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt LambdaGracefulTearDown.Arn
+      
+
+########################################################
+# Generate configuration presigned URLs
+########################################################
+  LambdaGenerateConfigPresignedURLsROLE:
+    Type: "AWS::IAM::Role"
+    DependsOn:
+      - BastionHost
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - s3:*
+            Resource: "*"
+
+  LambdaGenerateConfigPresignedURLsFunction:
+    Type: "AWS::Lambda::Function"
+    DependsOn:
+      - LambdaGenerateConfigPresignedURLsROLE
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          import json
+          import boto3
+          import cfnresponse
+          
+          region="${AWS::Region}"
+          s3 = boto3.client('s3', region_name=region)
+          URLExpires=86400
+          
+          s3bucket="${LambdaGenerateConfigS3Bucket.BucketName}"
+          vpnconfigkey="openvpn-profiles.zip"
+          
+          def generatePresignedURLForVPNConfig():
+            return s3.generate_presigned_url('get_object', Params = {'Bucket': s3bucket, 'Key': vpnconfigkey}, ExpiresIn = URLExpires)
+            
+          def handler(event, context):
+            if event['RequestType'] == 'Delete':
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              return
+            try:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, { 'OpenVPNProfiles': generatePresignedURLForVPNConfig()})
+              return
+            except Exception as e:
+              print(e)
+              cfnresponse.send(event, context, cfnresponse.FAILED, { 'Error': format(e) })
+              return
+          
+      Handler: "index.handler"
+      Runtime: "python3.6"
+      Timeout: "300"
+      Role: !GetAtt LambdaGenerateConfigPresignedURLsROLE.Arn
+
+  LambdaGenerateConfigPresignedURLs:
+    Type: Custom::LambdaGenerateConfigPresignedURLs
+    Properties:
+      ServiceToken: !GetAtt LambdaGenerateConfigPresignedURLsFunction.Arn
+      Region: !Ref "AWS::Region"
+
+Outputs:
+  DownloadOpenVPNProfilesURL:
+    Description: "You have 1 day (link expires) to download the VPN profile, otherwise use SSM to access machine and get them."
+    Value: !Sub ${LambdaGenerateConfigPresignedURLs.OpenVPNProfiles}

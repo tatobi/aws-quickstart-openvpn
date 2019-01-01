@@ -49,6 +49,8 @@ Click on the AWS QuicKstart URLs __below__ to deploy different AWS regions. They
 
 ## Architecture
 
+Here is an __example__ deployment architecture: where previously deployed EC2 instances running in multiple private subnets, and the public subnet deployed OpenVPN bastion provides accessibility through the secure VPN tunnel for the clients.
+
 [![N|Solid](https://raw.githubusercontent.com/tatobi/aws-quickstart-openvpn/master/docs/architecture.png)](https://raw.githubusercontent.com/tatobi/aws-quickstart-openvpn/master/docs/architecture.png)
 
 ## Features

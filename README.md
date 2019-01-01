@@ -105,7 +105,7 @@ __Cloudformation Steps:__
 
 3. Click "Next",
 
-4. Check checkbox: "I acknowledge that AWS CloudFormation might create IAM resources."
+4. Scroll down, check checkbox: "I acknowledge that AWS CloudFormation might create IAM resources."
 
 5. Click "Create"
 

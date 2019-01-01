@@ -479,7 +479,7 @@ Resources:
                 echo "AWS DNS IP: $awsdns"
 
                 sed -i 's/CHANGE_SERVER_IP/'$public_ip'/g' $openvpnvars
-                sed -i 's/CHANGE_CC/'HU'/g' $openvpnvars
+                sed -i 's/CHANGE_CC/'US'/g' $openvpnvars
                 sed -i 's/CHANGE_PROVINCE/'AWS'/g' $openvpnvars
                 sed -i 's/CHANGE_CITY/'${AWS::Region}'/g' $openvpnvars
                 sed -i 's/CHANGE_ORG/'${AWS::StackName}'/g' $openvpnvars

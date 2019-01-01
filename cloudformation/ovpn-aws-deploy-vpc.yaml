@@ -389,7 +389,7 @@ Resources:
           fi
           
           #update snap packages
-          if [[ ! -n `ps axu | grep snapd | grep -v grep` ]]; 
+          if [[ -n `ps axu | grep snapd | grep -v grep` ]]; 
           then
             snap refresh
           fi
@@ -459,7 +459,7 @@ Resources:
                 echo "$@"
 
                 mkdir -p /opt/openvpn-keys/
-                mv /opt/easy-openvpn/keygen /etc/openvpn/
+                mv /opt/aws-quickstart-openvpn/keygen /etc/openvpn/
                 cd /etc/openvpn/keygen
                 chmod +x /etc/openvpn/keygen/*
 

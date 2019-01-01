@@ -443,7 +443,7 @@ Resources:
                 cd /opt
                 mkdir -p /opt/openvpn-keys
                 
-                git clone "https://github.com/tatobi/easy-openvpn.git"
+                git clone "https://github.com/tatobi/aws-quickstart-openvpn.git"
                 
 
             '/opt/bastion-init-openvpn.sh':

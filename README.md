@@ -122,7 +122,7 @@ __DownloadOpenVPNProfilesURL__: ...
 
 Copy the URL to tyour browser and download the file.
 
-__IMPORTANT:__ by default the link is available for 24 hours after creation, for securiry reasons.
+__IMPORTANT:__ by default the link is available for 12 hours after creation, for securiry reasons.
 
 __Windows 10:__ ZIP files does not work natively anymnore, Microsoft baffted handling them correctly (not the ZIp files invalid!), I recommend download and install the Open Source alternative: [7-ZIP](https://www.7-zip.org/) or __WinZIP__ to extract the config files.
 

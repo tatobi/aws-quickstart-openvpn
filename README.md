@@ -2,7 +2,7 @@
 
 Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes.
 
-Open source OpenVPN software. No license required. Unlimited simultaneous connections. Auto-generated config.
+Open source OpenVPN software. No license required. *Unlimited* simultaneous connections. Auto-generated config.
 
 ## Single click deploy to AWS regions
 
@@ -99,7 +99,7 @@ __Limit external access to CIDR:__ optional, you can limite which IPs can connec
 
 __AWS EC2 Instance Type:__ choose an instance type from t2 and t3 Ec2 calsses (t2.micro is default because it is eligible for __FREE TIER__),
 
-__The number of generated OpenVPN connection profiles:__ how many openvpn config will be generated, multiple one means many hosts can use simultaneously the VPN conection (default: 3,. max: 100),
+__The number of generated OpenVPN connection profiles:__ how many openvpn config will be generated, multiple one means many hosts can use simultaneously the VPN conection (default: 10, max: 200),
 
 __Traffic routing:__ choose you ALL traffic, including the VPC and public Internet, (default gateway mode) __*ALL_GATEWAY_TCP443*__ routed through the tunnel, OR only the AWS VPC internal traffic: __*VPC_ONLY_UDP443*__. 
 
@@ -132,7 +132,7 @@ __IMPORTANT:__ by default the link is available for 12 hours after creation, for
 
 __NOTE on Windows 10:__ ZIP files does not work natively anymnore, Microsoft baffted handling them correctly (not the ZIp files invalid!), I recommend download and install the Open Source alternative: [7-ZIP](https://www.7-zip.org/) or __WinZIP__ to extract the config files.
 
-__UNZIP__ the downloaded ZIP file and save the *.ovpn files to a folder.
+__UNZIP__ the downloaded ZIP file and save the *.ovpn files to a folder. __*Pick a one, or share with other devices to connect.*__
 
 ### Clients
 

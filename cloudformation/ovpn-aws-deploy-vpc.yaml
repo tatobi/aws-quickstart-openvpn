@@ -72,8 +72,8 @@ Parameters:
     Description: 'Initial number of generated OpenVPN connection profiles'
     Default: 3
     Type: Number
-    MinValue: 1
-    MaxValue: 100
+    MinValue: 10
+    MaxValue: 200
     
   VPNTrafficRoutingProtocol:
     Description: "Choose: route ALL traffic (gateway mode) via TCP443 or VPC only (internal) via UDP443 from the connected host."

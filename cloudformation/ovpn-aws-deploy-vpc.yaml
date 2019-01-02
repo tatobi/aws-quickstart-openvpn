@@ -299,10 +299,7 @@ Resources:
       Region: !Ref "AWS::Region"
 
 ########################################################
-# Bastion Configuration
-# keep bastion here because
-# for testing Bastion acts as
-# the NAT
+# Bastion OpenVPN IAM role
 ########################################################
 
 #create role
@@ -338,9 +335,9 @@ Resources:
       Roles:
       - !Ref BastionRole
 
-#######################
-# bastion OpenVPN host
-#######################
+########################################################
+# Bastion OpenVPN Host
+########################################################
 
   BastionHost:
     Type: AWS::EC2::Instance
@@ -597,8 +594,9 @@ Resources:
         Timeout: PT30M
 
 
-  # This is a CloudWatch alarm https://aws.amazon.com/cloudwatch/
-  # If the Bastion node is unresponsive for 5 minutes, AWS will attempt to recover it
+########################################################
+# Bastion CloudWatch self-healing
+########################################################
   BastionRecoveryTestAlarm:
     Type: AWS::CloudWatch::Alarm
     DependsOn:
@@ -624,10 +622,8 @@ Resources:
         Value: !Ref BastionHost
         
 ###############################################
-# Lambda function for graceful tear-down of KOPS by AWS SSM
+# Lambda function for graceful tear-down of bastion and S3
 ###############################################
-
-  # IAM role for Lambda function for generating kubeadm token
   LambdaGracefulTearDownRole:
     Type: "AWS::IAM::Role"
     DependsOn:
@@ -717,7 +713,6 @@ Resources:
             Resource: '*'
 
 
-  # Lambda Function for graceful kops teardown
   LambdaGracefulTearDown:
     Type: "AWS::Lambda::Function"
     DependsOn:
@@ -800,7 +795,7 @@ Resources:
       
 
 ########################################################
-# Generate configuration presigned URLs
+# Generate configuration URL via S3 presigned URLs
 ########################################################
   LambdaGenerateConfigPresignedURLsROLE:
     Type: "AWS::IAM::Role"

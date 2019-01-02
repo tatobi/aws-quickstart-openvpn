@@ -1,6 +1,8 @@
 # AWS Quick Start for OpenVPN 
 
-Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes. Clients tested on Windows, Linux, Mac OSX and Android.
+Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes. Clients tested on Windows, Linux, Mac OSX and mobile (Android, iOS).
+
+Open source OpenVPN software. No license required. Unlimited simultaneous connections. Auto-generated config.
 
 ## Single click deploy to AWS regions
 
@@ -178,7 +180,9 @@ __Generated keys:__ /etc/openvpn/keys/
 
 - [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/)
 
-- [OpenVPN](https://community.openvpn.net/openvpn/wiki)
+- [OpenVPN WIKI](https://community.openvpn.net/openvpn/wiki)
+
+- [OpenVPN Source Code](https://github.com/OpenVPN)
 
 - [OpenVPN Hardening](https://community.openvpn.net/openvpn/wiki/Hardening)
 

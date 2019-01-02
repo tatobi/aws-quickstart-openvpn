@@ -1,6 +1,6 @@
 # AWS Quick Start for OpenVPN 
 
-Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes. Clients tested on Windows, Linux, Mac OSX and mobile (Android, iOS).
+Deploy secure OpenVPN tunnel to an existing AWS VPC in 2 minutes.
 
 Open source OpenVPN software. No license required. Unlimited simultaneous connections. Auto-generated config.
 

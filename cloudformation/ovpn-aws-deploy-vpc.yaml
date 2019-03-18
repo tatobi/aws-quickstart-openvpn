@@ -75,8 +75,8 @@ Parameters:
     Description: 'Initial number of generated OpenVPN connection profiles'
     Default: 3
     Type: Number
-    MinValue: 10
-    MaxValue: 200
+    MinValue: 1
+    MaxValue: 100
     
   VPNCertsDownloadLinkExpireTimeHOURS:
     Description: 'VPN cert download link expire time in HOURS'

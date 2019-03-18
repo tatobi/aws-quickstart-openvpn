@@ -33,8 +33,11 @@ Metadata:
         default: Limit external access to CIDR
       VPNNumberOfPreGeneratedCerts:
         default: The number of generated OpenVPN connection profiles
+      VPNCertsDownloadLinkExpireTimeHOURS:
+        default: The expire time of downloadable OVPN config files in HOURS
       VPNTrafficRoutingProtocol:
         default: Traffic routing
+
 
 Parameters:
   RemoteAccessCIDR:
@@ -50,7 +53,7 @@ Parameters:
   EC2InstanceType:
     Description: EC2 type for the OpenVPN Bastion instance.
     Type: String
-    Default: t2.micro
+    Default: t3.nano
     AllowedValues:
     - t3.nano
     - t3.micro
@@ -74,6 +77,13 @@ Parameters:
     Type: Number
     MinValue: 10
     MaxValue: 200
+    
+  VPNCertsDownloadLinkExpireTimeHOURS:
+    Description: 'VPN cert download link expire time in HOURS'
+    Default: 1
+    Type: Number
+    MinValue: 1
+    MaxValue: 744
     
   VPNTrafficRoutingProtocol:
     Description: "Choose: route ALL traffic (gateway mode) via TCP443 or VPC only (internal) via UDP443 from the connected host."
@@ -842,7 +852,8 @@ Resources:
           
           region="${AWS::Region}"
           s3 = boto3.client('s3', region_name=region, config=Config(s3={'addressing_style': 'path'}))
-          URLExpires=43200
+          URLExpires="${VPNCertsDownloadLinkExpireTimeHOURS}"
+          URLExpires=int(URLExpires)*3600
           
           s3bucket="${LambdaGenerateConfigS3Bucket.BucketName}"
           vpnconfigkey="openvpn-profiles.zip"

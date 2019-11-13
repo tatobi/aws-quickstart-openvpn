@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# verify a client certificate 
+
+source ./vars
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 <common-name>";
+    exit 1
+fi
+
+CRL="crl-test-$1.pem"
+RT="verify-test-$1.pem"
+
+if [ "$KEY_DIR" ]; then
+    echo "Verify OpenVPN certificate: $1"
+    cd "$KEY_DIR"
+    rm -f "$RT"
+
+    # set defaults
+    export KEY_CN=""
+    export KEY_OU=""
+
+    $OPENSSL ca -gencrl -out "$CRL" -config "$KEY_CONFIG"
+    cat ca.crt "$CRL" >"$RT"
+    echo "Verify the certificate: $1/$1.crt"
+
+    $OPENSSL verify -CAfile "$RT" -crl_check "$1/$1.crt"
+    rm -f "$CRL"
+    rm -f "$RT"
+else
+    echo 'Please source the vars script first (i.e. "source ./vars")'
+    echo 'Make sure you have edited it to reflect your configuration.'
+fi

@@ -8,7 +8,7 @@
 # This definition stops the following lines choking if HOME isn't
 # defined.
 HOME      = .
-RANDFILE    = $ENV::HOME/.rnd
+# RANDFILE    = $ENV::HOME/.rnd
 openssl_conf    = openssl_init
 
 [ openssl_init ]
